@@ -1,84 +1,78 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { use2048 } from '../hooks/use2048';
+import { GameBoard } from '../components/GameBoard';
 
-const slogans = [
-  "Turn chats into apps",
-  "Prompt. Ship. Repeat.",
-  "Build anything from a chat",
-  "Ideas → Apps, instantly",
-  "From zero to MVP in minutes",
-  "Your cofounder in the command line",
-  "Draft, iterate, deploy",
-  "Ship faster than you can type",
-  "Design in text, deliver in code",
-  "Dream it. Prompt it. Run it.",
-  "Chat-native app building",
-  "From prompt to product",
-  "One prompt, infinite apps",
-  "Stop scaffolding. Start shipping.",
-  "Prototype at the speed of thought",
-  "Make conversations executable"
-];
+export default function Game2048() {
+  const { gameState, initializeGame } = use2048();
 
-export default function Landing() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
-
+  // Save best score to localStorage
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % slogans.length);
-        setIsVisible(true);
-      }, 400);
-    }, 2800);
+    if (typeof window !== 'undefined') {
+      const currentBest = parseInt(localStorage.getItem('2048-best') || '0');
+      if (gameState.score > currentBest) {
+        localStorage.setItem('2048-best', gameState.score.toString());
+      }
+    }
+  }, [gameState.score]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const getBestScore = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('2048-best') || '0';
+    }
+    return '0';
+  };
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-black text-white">
-      {/* Enhanced animated aurora background layers */}
-      <div className="absolute inset-0 bg-aurora-layer-1" />
-      <div className="absolute inset-0 bg-aurora-layer-2" />
-      <div className="absolute inset-0 bg-aurora-layer-3" />
-      
-      {/* Floating particles overlay */}
-      <div className="absolute inset-0 bg-particles" />
-      
-      {/* Main content - centered */}
-      <main className="relative z-10 h-full flex flex-col items-center justify-center px-6">
-        <h1 className="text-center text-[clamp(28px,6vw,64px)] font-medium tracking-tight mb-4">
-          Turn Chats into Apps
-        </h1>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">2048</h1>
         
-        {/* Rotating slogans */}
-        <div className="mt-4 h-8 md:h-10 overflow-hidden flex items-center justify-center">
-          <span
-            className={`inline-block text-center text-[clamp(18px,3vw,32px)] font-light transition-all duration-[400ms] ease-in-out ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-            }`}
-          >
-            {slogans[currentIndex]}
-          </span>
+        {/* Score Display */}
+        <div className="flex justify-between mb-6">
+          <div className="bg-gray-200 rounded-lg p-3 text-center flex-1 mr-2">
+            <div className="text-sm text-gray-600">SCORE</div>
+            <div className="text-xl font-bold">{gameState.score}</div>
+          </div>
+          <div className="bg-gray-200 rounded-lg p-3 text-center flex-1 ml-2">
+            <div className="text-sm text-gray-600">BEST</div>
+            <div className="text-xl font-bold">{getBestScore()}</div>
+          </div>
         </div>
-      </main>
-      
-      {/* Start Prompting arrow pointing left - bottom left */}
-      <div className="absolute left-6 md:left-8 bottom-[5%] z-20 flex items-center gap-3 arrow-point-left">
-        <div className="flex items-center gap-2 text-white/80 font-medium text-sm md:text-base">
-          <svg 
-            className="w-5 h-5 md:w-6 md:h-6 animate-bounce-horizontal" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
+
+        {/* Game Status Messages */}
+        {gameState.won && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-center">
+            🎉 You won! You reached 2048!
+          </div>
+        )}
+        
+        {gameState.gameOver && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center">
+            Game Over! No more moves available.
+          </div>
+        )}
+
+        {/* Game Board */}
+        <div className="mb-6">
+          <GameBoard tiles={gameState.tiles} />
+        </div>
+
+        {/* Controls */}
+        <div className="text-center">
+          <button 
+            onClick={initializeGame}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mb-4 transition-colors"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Start prompting</span>
+            New Game
+          </button>
+          <p className="text-sm text-gray-600">
+            Use arrow keys to move tiles. Combine tiles with the same number to reach 2048!
+          </p>
         </div>
       </div>
     </div>
   );
 }
+
